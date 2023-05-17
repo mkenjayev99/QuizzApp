@@ -1,0 +1,7 @@
+Django
+Pillow
+django-ckeditor
+djangorestframework
+djangorestframework-simplejwt
+drf-yasg
+python-dotenv
