@@ -57,6 +57,31 @@ class MyProfileSerializer(serializers.ModelSerializer):
         fields = ['username', 'first_name', 'last_name', 'bio', 'date_created']
 
 
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'title']
 
+
+class OptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Option
+        fields = ['id', 'question', 'title', 'is_true']
+
+
+class QuestionSerializer(serializers.ModelSerializer):
+    option = OptionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Question
+        fields = ['id', 'category', 'question', 'level']
+
+
+class ResultSerializer(serializers.ModelSerializer):
+    questions = QuestionSerializer(read_only=True)
+
+    class Meta:
+        model = Result
+        fields = ['id', 'author', 'questions', 'category', 'result']
 
 

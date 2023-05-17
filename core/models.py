@@ -7,14 +7,14 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class TimeStamp(models.Model):
-    created_date = models.DateTimeField()
+    created_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         abstract = True
 
 
 # Subjects
-class Category(models.Model):
+class Category(TimeStamp):
     title = models.CharField(max_length=218)
 
     def __str__(self):
