@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 
-from .models import Question, Category, Option, Account, Result, Statistics
+from .models import Question, Category, Option, Account, Result
 from django.contrib.auth import authenticate
 
 
@@ -74,7 +74,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ['id', 'category', 'question', 'level']
+        fields = ['id', 'category', 'question', 'option', 'level']
 
 
 class ResultSerializer(serializers.ModelSerializer):
@@ -83,5 +83,15 @@ class ResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = Result
         fields = ['id', 'author', 'questions', 'category', 'result']
+
+
+class StatisticsSerializer(serializers.ModelSerializer):
+    authors = MyProfileSerializer(many=True)
+    results = ResultSerializer(many=True)
+
+    class Meta:
+        model = Result
+        fields = ['authors', 'results']
+
 
 

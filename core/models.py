@@ -80,6 +80,7 @@ def file_path(instance, filename):
 
 # ROLES = (teacher, student)
 class Account(AbstractBaseUser, PermissionsMixin):
+    """ Custom Account Model """
     username = models.CharField(max_length=218, unique=True, verbose_name='Username', db_index=True)
     first_name = models.CharField(max_length=218)
     last_name = models.CharField(max_length=218)
@@ -125,7 +126,8 @@ class Account(AbstractBaseUser, PermissionsMixin):
         return data
 
 
-class Result(TimeStamp):  # by_Student,, Quizz renamed to Result
+class Quizz(TimeStamp):  # by_student
+    """ collections of questions """
     author = models.ForeignKey(Account, on_delete=models.CASCADE)
     questions = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
@@ -133,11 +135,6 @@ class Result(TimeStamp):  # by_Student,, Quizz renamed to Result
 
     def __str__(self):
         return f"{self.author} - {self.result}"
-
-
-class Statistics(TimeStamp):
-    average_student = models.ManyToManyField(Result)
-    average_category = models.ManyToManyField(Category)
 
 
 
