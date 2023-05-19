@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 
     # mainapp
     'core',
+    'account'
 ]
 
 AUTH_USER_MODEL = 'core.Account'

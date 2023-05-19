@@ -1,6 +1,6 @@
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
-from .models import Account, Option, Category, Result, Question
+from .models import Account, Option, Category, Quizz, Question
 from .permissions import IsOwnerOrReadOnly
 from .serializers import (RegisterSerializer,
                           LoginSerializer,
@@ -54,23 +54,18 @@ class QuestionListAPIView(generics.ListCreateAPIView):
         return qs
 
 
-class GetQuestionsAndCollectAnswers(generics.ListCreateAPIView):
-    serializer_class = (QuestionSerializer, OptionSerializer)
+class OptionListCreate(generics.ListCreateAPIView):
+    serializer_class = OptionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        """ returns the queryset of question of exact
-        category and options that belong to the question """
+        """ returns the queryset of options of exact question """
 
-        category_id = self.kwargs.get('category_id')
         question_id = self.kwargs.get('question_id')
-        qs_options = Option.objects.filter(question_id=question_id)
-        qs_questions = Question.objects.filter(category_id=category_id)
+        qs = Option.objects.filter(question_id=question_id)
+        return qs
 
-        ans = {}
-        for question, option in enumerate(qs_questions, qs_options):
-            ans[question] = option
-        return ans
+
 
 
 

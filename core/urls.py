@@ -7,6 +7,7 @@ urlpatterns = [
     path('my_profile/<int:pk>', views.MyProfileRUDAPIView.as_view()),
 
     path('category/<int:category_id>/questions/', views.QuestionListAPIView.as_view()),
+    path('category/<int:category_id>/questions/<int:question_id>/options/', views.OptionListCreate.as_view()),
 ]
 
 

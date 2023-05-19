@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 
-from .models import Question, Category, Option, Account, Result
+from .models import Question, Category, Option, Account, Quizz
 from django.contrib.auth import authenticate
 
 
@@ -70,18 +70,18 @@ class OptionSerializer(serializers.ModelSerializer):
 
 
 class QuestionSerializer(serializers.ModelSerializer):
-    option = OptionSerializer(many=True, read_only=True)
+    options = OptionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Question
-        fields = ['id', 'category', 'question', 'option', 'level']
+        fields = ['id', 'category', 'question', 'options', 'level']
 
 
 class ResultSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(read_only=True)
 
     class Meta:
-        model = Result
+        model = Quizz
         fields = ['id', 'author', 'questions', 'category', 'result']
 
 
@@ -90,7 +90,7 @@ class StatisticsSerializer(serializers.ModelSerializer):
     results = ResultSerializer(many=True)
 
     class Meta:
-        model = Result
+        model = Quizz
         fields = ['authors', 'results']
 
 
