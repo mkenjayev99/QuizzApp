@@ -1,9 +1,8 @@
 from django.contrib import admin
-from .models import Question, Category, Account, Option, Quizz
+from .models import Question, Category, Option, Quizz
 
 admin.site.register(Category)
 admin.site.register(Quizz)
-admin.site.register(Account)
 
 
 class AnswerInLineModel(admin.TabularInline):
