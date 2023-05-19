@@ -24,6 +24,14 @@ class QuestionListAPIView(generics.ListCreateAPIView):
         qs = Question.objects.filter(category_id=category_id).order_by('?')[:5]
         return qs
 
+    # def get_queryset(self):
+    #     qs = super().get_queryset()
+    #     category_id = self.kwargs.get('category_id')
+    #     if qs:
+    #         qs = qs.filter(category_id=category_id)
+    #         return qs
+    #     return HttpResponseNotFound('Not Found!')
+
 
 class OptionListCreate(generics.ListCreateAPIView):
     serializer_class = OptionSerializer
@@ -35,6 +43,11 @@ class OptionListCreate(generics.ListCreateAPIView):
         question_id = self.kwargs.get('question_id')
         qs = Option.objects.filter(question_id=question_id)
         return qs
+
+
+class ResultListCreate(generics.ListAPIView):
+    serializer_class = ResultSerializer
+    queryset = Quizz.objects.all()
 
 
 
