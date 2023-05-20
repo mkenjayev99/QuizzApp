@@ -50,41 +50,44 @@ class ResultListCreate(generics.GenericAPIView):
     def post(self, request):
         data = self.request.data.get('data')
         """
-        [
-            'object': {'id': 1
-                item: 
-                {'question_id': 1    <- 1 - item
-                'option_id': 4
-                }
-                    },
+        [ 
+            {
+            'question_id': 1    <- 1 - item
+            'option_id': 4
+            },
             
-            {'question_id': 3    <- 2 - item
+            {
+            'question_id': 3    <- 2 - item
             'option_id': 1
             },
             
-            {'question_id': 12    <- 3 - item
+            {
+            'question_id': 12    <- 3 - item
             'option_id': 45
             },
             
-            {'question_id': 19    <- 4 - item
+            {
+            'question_id': 19    <- 4 - item
             'option_id': 34
             },
             
-            {'question_id': 20    <- 5 - item
+            {
+            'question_id': 20    <- 5 - item
             'option_id': 10
-            },
+            }
         ]
         """
-        question_id = data.object.item['question_id']
-        option_id = data.object.item['option_id']
 
         right = 0
         wrong = 0
         score = 0
-        # if self.kwargs.get('question_id') == question_id and self.
 
-
-
+        for question, option in enumerate(data):
+            if self.kwargs.get('question_id') == question and self.kwargs.get('option_id') == option:
+                right += 1
+                score += 10
+            else:
+                wrong += 1
 
 
 
