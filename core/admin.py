@@ -11,6 +11,7 @@ class CategoryAdmin(admin.ModelAdmin):
 class OptionInLineModel(admin.TabularInline):
     model = Option
     readonly_fields = ('id',)
+
     extra = 0
 
 
