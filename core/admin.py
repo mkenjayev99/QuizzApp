@@ -1,22 +1,30 @@
 from django.contrib import admin
 from .models import Question, Category, Option, Quizz
 
-admin.site.register(Category)
-admin.site.register(Quizz)
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ['id', 'title', 'created_date']
+    list_display_links = ['id', 'title']
 
 
-class AnswerInLineModel(admin.TabularInline):
+class OptionInLineModel(admin.TabularInline):
     model = Option
-    fields = ['title', 'is_true']
+    readonly_fields = ('id',)
+    extra = 0
 
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     list_display = ['id', 'question', 'category', 'level']
-    inlines = [AnswerInLineModel]
+    list_display_links = ['id', 'question', 'category']
+    inlines = [OptionInLineModel]
 
 
-@admin.register(Option)
-class OptionAdmin(admin.ModelAdmin):
-    list_display = ['id', 'question', 'title', 'is_true']
+@admin.register(Quizz)
+class QuizzAdmin(admin.ModelAdmin):
+    list_display = ['id', 'result', 'category', 'author', 'questions']
+    list_display_links = ['id', 'result', 'category', 'author', 'questions']
+
+
 

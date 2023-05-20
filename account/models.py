@@ -42,7 +42,6 @@ class Account(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=218)
     last_name = models.CharField(max_length=218)
     image = models.ImageField(upload_to=file_path, null=True, blank=True)
-    location = models.CharField(max_length=218)
     is_superuser = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
