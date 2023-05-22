@@ -24,8 +24,8 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(Quizz)
 class QuizzAdmin(admin.ModelAdmin):
-    list_display = ['id', 'result', 'category', 'author', 'questions']
-    list_display_links = ['id', 'result', 'category', 'author', 'questions']
+    list_display = ['id', 'score', 'category', 'student', 'questions']
+    list_display_links = ['id', 'score', 'category', 'student', 'questions']
 
 
 

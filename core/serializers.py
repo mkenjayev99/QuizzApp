@@ -22,14 +22,21 @@ class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ['id', 'category', 'question', 'options', 'level']
+        extra_kwargs = {
+            'category': {'read_only': True}
+        }
 
 
 class ResultSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(read_only=True)
+    option = OptionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Quizz
-        fields = ['id', 'author', 'questions', 'category', 'result']
+        fields = ['id', 'student', 'category', 'questions', 'option', 'score']
+        extra_kwargs = {
+            'score': {'read_only': True}
+        }
 
 
 class StatisticsSerializer(serializers.ModelSerializer):

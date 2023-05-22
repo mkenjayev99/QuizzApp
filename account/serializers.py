@@ -54,3 +54,4 @@ class MyProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = ['username', 'first_name', 'last_name', 'bio', 'date_created']
+

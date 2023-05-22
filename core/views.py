@@ -3,10 +3,11 @@ from rest_framework.response import Response
 from .models import Option, Category, Quizz, Question
 from .permissions import IsOwnerOrReadOnly
 from .serializers import (StatisticsSerializer,
-                          ResultSerializer,
                           CategorySerializer,
                           OptionSerializer,
-                          QuestionSerializer
+                          QuestionSerializer,
+                          ResultPOSTSerializer,
+                          ResultGETSerializer,
                           )
 
 
@@ -45,53 +46,58 @@ class OptionListCreate(generics.ListCreateAPIView):
         return qs
 
 
-class ResultListCreate(generics.GenericAPIView):
+# Student attends to take the quizz:
+class ResultCreateAPIView(generics.CreateAPIView):
+    serializer_class = ResultPOSTSerializer
 
-    def post(self, request):
-        data = self.request.data.get('data')
-        """
-        [ 
-            {
-            'question_id': 1    <- 1 - item
-            'option_id': 4
-            },
-            
-            {
-            'question_id': 3    <- 2 - item
-            'option_id': 1
-            },
-            
-            {
-            'question_id': 12    <- 3 - item
-            'option_id': 45
-            },
-            
-            {
-            'question_id': 19    <- 4 - item
-            'option_id': 34
-            },
-            
-            {
-            'question_id': 20    <- 5 - item
-            'option_id': 10
-            }
-        ]
-        """
+    def perform_create(self, serializer):
+        # the Student who is taking the quizz:
+        student = self.request.user
 
-        right = 0
-        wrong = 0
+        # handling submitted answers:
+        submitted_options = self.request.user.data.get('options', [])
+
+        # calculating score, wrong, right answers:
         score = 0
+        score_by_level = 0
+        wrong = 0
+        correct = 0
 
-        for question, option in enumerate(data):
-            if self.kwargs.get('question_id') == question and self.kwargs.get('option_id') == option:
-                right += 1
+        all_questions = len(submitted_options)
+        for option in submitted_options:
+            # Check if the option is true or not:
+            question_id = option['question_id']
+            chosen_option_id = option['chosen_option_id']
+            is_true = Option.objects.get(question_id=question_id, id=chosen_option_id).is_true
+            if is_true:
+                if option.question.level == 0:
+                    score_by_level += 10
+                elif option.question.level == 1:
+                    score_by_level += 20
+                else:
+                    score_by_level += 40
                 score += 10
-            else:
+                correct += 1
+            elif not is_true:
                 wrong += 1
+        percentage = (correct/all_questions)*100
+
+        # Saving the result above:
+        serializer.save(
+            student=student,
+            category_id=self.kwargs['category_id'],
+            score=score,
+            correct=correct,
+            wrong=wrong,
+            percentage=percentage
+        )
+        return Response('Successfully created')
 
 
+class ResultListAPIView(generics.ListAPIView):
+    serializer_class = ResultGETSerializer
 
-
-
-
-
+    def get_queryset(self):
+        student = self.request.user
+        category_id = self.kwargs['category_id']
+        return Quizz.objects.filter(student=student, category_id=category_id)

@@ -46,14 +46,13 @@ class Option(models.Model):
 
 class Quizz(TimeStamp):  # by_student
     """ collections of questions """
-    author = models.ForeignKey('account.Account', on_delete=models.CASCADE)
+    student = models.ForeignKey('account.Account', on_delete=models.CASCADE)
     questions = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    result = models.DecimalField(decimal_places=2, max_digits=5)
+    # result = models.DecimalField(decimal_places=2, max_digits=5)
+    score = models.IntegerField()
 
     def __str__(self):
-        return f"{self.author} - {self.result}"
-
-
+        return f"{self.student} - {self.score}"
 
 
