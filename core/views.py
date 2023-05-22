@@ -6,8 +6,7 @@ from .serializers import (StatisticsSerializer,
                           CategorySerializer,
                           OptionSerializer,
                           QuestionSerializer,
-                          ResultPOSTSerializer,
-                          ResultGETSerializer,
+                          ResultSerializer,
                           )
 
 
@@ -48,7 +47,7 @@ class OptionListCreate(generics.ListCreateAPIView):
 
 # Student attends to take the quizz:
 class ResultCreateAPIView(generics.CreateAPIView):
-    serializer_class = ResultPOSTSerializer
+    serializer_class = ResultSerializer
 
     def perform_create(self, serializer):
         # the Student who is taking the quizz:
@@ -95,7 +94,7 @@ class ResultCreateAPIView(generics.CreateAPIView):
 
 
 class ResultListAPIView(generics.ListAPIView):
-    serializer_class = ResultGETSerializer
+    serializer_class = ResultSerializer
 
     def get_queryset(self):
         student = self.request.user
