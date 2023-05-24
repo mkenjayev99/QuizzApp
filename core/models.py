@@ -47,7 +47,7 @@ class Option(models.Model):
 class Quizz(TimeStamp):  # by_student
     """ collections of questions """
     student = models.ForeignKey('account.Account', on_delete=models.CASCADE)
-    questions = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=True)
+    questions = models.ManyToManyField(Question)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     # result = models.DecimalField(decimal_places=2, max_digits=5)
     score = models.IntegerField()
