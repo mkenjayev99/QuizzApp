@@ -52,7 +52,6 @@ class Account(AbstractBaseUser, PermissionsMixin):
     objects = AccountManager()
 
     USERNAME_FIELD = 'username'
-    EMAIL_FIELD = 'username'
     REQUIRED_FIELDS = []
 
     def __str__(self):
@@ -84,11 +83,11 @@ class Account(AbstractBaseUser, PermissionsMixin):
         return data
 
 
-def account_pre_save(instance, sender, *args, **kwargs):
-    if instance.is_superuser:
-        instance.is_superuser = True
-    else:
-        instance.is_superuser = False
-
-
-pre_save.connect(account_pre_save, sender=Account)
+# def account_pre_save(instance, sender, *args, **kwargs):
+#     if instance.is_superuser:
+#         instance.is_superuser = True
+#     else:
+#         instance.is_superuser = False
+#
+#
+# pre_save.connect(account_pre_save, sender=Account)
