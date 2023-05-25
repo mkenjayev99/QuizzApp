@@ -2,8 +2,13 @@ from django.db import models
 from django.contrib.auth.models import PermissionsMixin, AbstractBaseUser, BaseUserManager
 from django.conf import settings
 from ckeditor.fields import RichTextField
+from django.db.models.signals import pre_save
 from django.utils.safestring import mark_safe
 from rest_framework_simplejwt.tokens import RefreshToken
+
+
+def file_path(instance, filename):
+    return f"courses/{instance.title}/{instance.title}/{filename}"
 
 
 class AccountManager(BaseUserManager):
@@ -25,14 +30,10 @@ class AccountManager(BaseUserManager):
             **extra_fields
         )
         user.is_superuser = True
-        user.is_staff = True
         user.is_active = True
+        user.is_staff = True
         user.save(using=self._db)
         return user
-
-
-def file_path(instance, filename):
-    return f"courses/{instance.title}/{instance.title}/{filename}"
 
 
 # ROLES = (teacher, student)
@@ -51,6 +52,7 @@ class Account(AbstractBaseUser, PermissionsMixin):
     objects = AccountManager()
 
     USERNAME_FIELD = 'username'
+    EMAIL_FIELD = 'username'
     REQUIRED_FIELDS = []
 
     def __str__(self):
@@ -81,3 +83,12 @@ class Account(AbstractBaseUser, PermissionsMixin):
         }
         return data
 
+
+def account_pre_save(instance, sender, *args, **kwargs):
+    if instance.is_superuser:
+        instance.is_superuser = True
+    else:
+        instance.is_superuser = False
+
+
+pre_save.connect(account_pre_save, sender=Account)
