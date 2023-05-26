@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Avg
 
 
 class TimeStamp(models.Model):
@@ -46,13 +47,32 @@ class Option(models.Model):
 
 class Quizz(TimeStamp):  # by_student
     """ collections of questions """
-    student = models.ForeignKey('account.Account', on_delete=models.CASCADE)
-    questions = models.ManyToManyField(Question)
+    account = models.ForeignKey('account.Account', on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    questions = models.ManyToManyField(Question)
     # result = models.DecimalField(decimal_places=2, max_digits=5)
-    score = models.IntegerField()
+    score = models.FloatField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.student} - {self.score}"
+        return f"{self.account} - {self.score} in {self.category}"
+
+    @classmethod
+    def calculate_average_result_category(cls, category):
+        average_result = cls.objects.filter(category=category).aggregate(Avg('score'))['score__avg']
+        return average_result
+
+    @classmethod
+    def calculate_average_result_account(cls, account):
+        average_result = cls.objects.filter(account=account).aggregate(Avg('score'))['score__avg']
+        return average_result
+
+
+class Contact(models.Model):
+    name = models.CharField(max_length=218)
+    email = models.EmailField(unique=True)
+    message = models.TextField()
+
+    def __str__(self):
+        return f"{self.email}, {self.name}"
 
 

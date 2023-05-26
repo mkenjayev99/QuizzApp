@@ -33,7 +33,7 @@ class ResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Quizz
-        fields = ['id', 'student', 'category', 'questions', 'options', 'score']
+        fields = ['id', 'account', 'category', 'questions', 'options', 'score']
         extra_kwargs = {
             'score': {'read_only': True}
         }
