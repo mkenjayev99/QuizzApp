@@ -1,3 +1,5 @@
+from operator import attrgetter
+
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,8 +8,7 @@ from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
 
 from account.models import Account
 from .models import Option, Category, Quizz, Question
-from .serializers import (StatisticsSerializer,
-                          CategorySerializer,
+from .serializers import (CategorySerializer,
                           OptionSerializer,
                           QuestionSerializer,
                           ResultSerializer,
@@ -15,17 +16,17 @@ from .serializers import (StatisticsSerializer,
 
 
 class CategoryListAPIView(generics.ListAPIView):
+    # http://127.0.0.1:8000/api/quizz/category
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAuthenticated]
 
 
-class QuestionListAPIView(generics.ListCreateAPIView):
+class QuestionListAPIView(generics.ListAPIView):
+    # http://127.0.0.1:8000/api/quizz/category/2/questions/
     serializer_class = QuestionSerializer
-    permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self):
-        category_id = self.kwargs.get('pk')
+        category_id = self.kwargs['category_id']
         qs = Question.objects.filter(category_id=category_id).order_by('?')[:5]
         return qs
 
@@ -38,21 +39,14 @@ class QuestionListAPIView(generics.ListCreateAPIView):
     #     return HttpResponseNotFound('Not Found!')
 
 
-class OptionListCreate(generics.ListCreateAPIView):
-    serializer_class = OptionSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        """ returns the queryset of options of exact question """
-
-        question_id = self.kwargs.get('question_id')
-        qs = Option.objects.filter(question_id=question_id)
-        return qs
-
-
 class ResultListAPIView(generics.ListAPIView):
     queryset = Quizz.objects.all()
     serializer_class = ResultSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        qs = sorted(qs, key=attrgetter('result'), reverse=True)
+        return qs
 
 
 class ResultCreateAPIView(APIView):
@@ -65,7 +59,7 @@ class ResultCreateAPIView(APIView):
             Category.objects.get(id=category_id)
         except Category.DoesNotExist:
             return Response("Category not found")
-        result = Quizz.objects.create(student=account, category_id=category_id)
+        result = Quizz.objects.create(account_id=account.id, category_id=category_id)
         for i in questions:
             question_id = int(i.get('question_id'))
             option_id = int(i.get('option_id'))
@@ -74,59 +68,88 @@ class ResultCreateAPIView(APIView):
                 option = Option.objects.get(id=option_id)
             except (Question.DoesNotExist, Option.DoesNotExist):
                 continue
-            if option.is_correct:
-                count += 20
+            if option.is_true:
+                count += 10
             result.questions.add(question)
         result.score = count
         result.save()
         return Response("Result was saved", status=status.HTTP_201_CREATED)
 
+    """
+    {
+      "category_id": 1,
+      "questions": [
+        {
+          "question_id": 1,
+          "option_id": 1
+        },
+        {
+          "question_id": 2,
+          "option_id": 6
+        },
+        {
+          "question_id": 4,
+          "option_id": 14
+        },
+        {
+          "question_id": 5,
+          "option_id": 17
+        },
+        {
+          "question_id": 6,
+          "option_id": 21
+        }
+      ]
+    }
+    """
 
-class ResultByTime(APIView):
-    permission_classes = [permissions.IsAdminUser]
 
-    @staticmethod
-    def get(request):
-        time_period = request.GET.get('time_period', 'day')
+# class ResultByTime(APIView):
+#     permission_classes = [permissions.IsAdminUser]
+#
+#     @staticmethod
+#     def get(request):
+#         time_period = request.GET.get('time_period', 'day')
+#
+#         if time_period == 'day':
+#             trunc_func = TruncDay('created_date')
+#         elif time_period == 'week':
+#             trunc_func = TruncWeek('created_date')
+#         elif time_period == 'month':
+#             trunc_func = TruncMonth('created_date')
+#         else:
+#             return Response("Invalid time_period parameter", status=status.HTTP_400_BAD_REQUEST)
+#
+#         results = Quizz.objects.annotate(
+#             result_count=Count('id'),
+#             average_score=Avg('score'),
+#             truncated_date=trunc_func,
+#         ).values('truncated_date', 'result_count', 'average_score')
+#
+#         return Response(results, status=status.HTTP_200_OK)
 
-        if time_period == 'day':
-            trunc_func = TruncDay('created_date')
-        elif time_period == 'week':
-            trunc_func = TruncWeek('created_date')
-        elif time_period == 'month':
-            trunc_func = TruncMonth('created_date')
-        else:
-            return Response("Invalid time_period parameter", status=status.HTTP_400_BAD_REQUEST)
 
-        results = Quizz.objects.annotate(
-            result_count=Count('id'),
-            average_score=Avg('score'),
-            truncated_date=trunc_func,
-        ).values('truncated_date', 'result_count', 'average_score')
-
-        return Response(results, status=status.HTTP_200_OK)
+class AverageStatisticsByCategory(APIView):
+    def get(self, request):
+        categories = Category.objects.all()
+        category_results = []
+        for category in categories:
+            average_by_category = Quizz.calculate_average_result_category(category)
+            category_results.append({'title': category.title, 'average_result': average_by_category})
+        return Response(category_results)
 
 
-class StudentAverageStatisticsByCategory(APIView):
+
+# CONTINUE FROM HERE
+
+class AverageStatisticsByAccount(APIView):
 
     def get(self, request):
-        student = self.request.user
-        category_id = request.GET.get('category_id')
+        accounts = Account.objects.all()
+        account_results = []
+        for account in accounts:
+            average_by_account =
 
-        if not category_id:
-            return Response("category_id parameter is required", status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            category = Category.objects.get(id=category_id)
-        except Category.DoesNotExist:
-            return Response("Category not found", status=status.HTTP_404_NOT_FOUND)
-
-        results = Quizz.objects.filter(student=student, category=category).annotate(
-            average_score=Avg('score')
-        )
-
-        serializer = ResultSerializer(results, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class StatisticsAPIView(APIView):

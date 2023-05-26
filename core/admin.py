@@ -20,6 +20,7 @@ class QuestionAdmin(admin.ModelAdmin):
     list_display = ['id', 'question', 'category', 'level']
     list_display_links = ['id', 'question', 'category']
     inlines = [OptionInLineModel]
+    list_filter = ['category', 'level']
 
 
 @admin.register(Quizz)

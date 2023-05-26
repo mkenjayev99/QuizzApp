@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from account.serializers import MyProfileSerializer
-from .models import Question, Category, Option, Quizz
+from .models import Question, Category, Option, Quizz, Contact
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -22,9 +22,6 @@ class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ['id', 'category', 'question', 'options', 'level']
-        extra_kwargs = {
-            'category': {'read_only': True}
-        }
 
 
 class ResultSerializer(serializers.ModelSerializer):
@@ -34,35 +31,11 @@ class ResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quizz
         fields = ['id', 'account', 'category', 'questions', 'options', 'score']
-        extra_kwargs = {
-            'score': {'read_only': True}
-        }
 
 
-class StatisticsSerializer(serializers.ModelSerializer):
-    authors = MyProfileSerializer(many=True)
-
-    results = ResultSerializer(many=True, read_only=True)
-
-    def to_representation(self, instance):
-        request = self.context.get('request')
-        category_id = request.query_params.get('category_id')
-
-        if category_id:
-            results = instance.results.filter(category_id=category_id)
-        else:
-            results = instance.results.all()
-
-        serialized_results = ResultSerializer(results, many=True).data
-
-        return {
-            'authors': MyProfileSerializer(instance.authors, many=True).data,
-            'results': serialized_results
-        }
-
+class ContactSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Quizz
-        fields = ['authors', 'results']
-
+        model = Contact
+        fields = ['id', 'name', 'email', 'message']
 
 
