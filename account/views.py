@@ -38,6 +38,7 @@ class LoginView(generics.GenericAPIView):
 
 
 class AccountRUView(generics.RetrieveUpdateAPIView):
+    # http://127.0.0.1:8000/account/retrieve-update/{pk}
     serializer_class = AccountSerializer
     queryset = Account.objects.all()
     permission_classes = [IsOwnerOrReadOnly]
@@ -59,6 +60,7 @@ class AccountRUView(generics.RetrieveUpdateAPIView):
 
 
 class MyProfileListAPIView(generics.ListAPIView):
+    # http://127.0.0.1:8000/account/my_profile/{pk}
     queryset = Account.objects.all()
     serializer_class = MyProfileSerializer
     permission_classes = [IsOwnerOrReadOnly]
