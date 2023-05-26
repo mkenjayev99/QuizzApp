@@ -129,7 +129,7 @@ class ResultCreateAPIView(APIView):
 #         return Response(results, status=status.HTTP_200_OK)
 
 
-class AverageStatisticsByCategory(APIView):
+class AverageStatisticsListByCategory(APIView):
     def get(self, request):
         categories = Category.objects.all()
         category_results = []
@@ -139,16 +139,15 @@ class AverageStatisticsByCategory(APIView):
         return Response(category_results)
 
 
-
-# CONTINUE FROM HERE
-
-class AverageStatisticsByAccount(APIView):
+class AverageStatisticsListByAccount(APIView):
 
     def get(self, request):
         accounts = Account.objects.all()
         account_results = []
         for account in accounts:
-            average_by_account =
+            average_by_account = Quizz.calculate_average_result_account(account)
+            serialized_account = AccountSerializer(account).data
+            account_results.append({})
 
 
 

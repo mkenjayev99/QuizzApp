@@ -4,6 +4,12 @@ from rest_framework.exceptions import AuthenticationFailed
 from .models import Account
 
 
+class AccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        fields = ['id', 'username', 'first_name', 'last_name', 'image', 'bio']
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=218)
     password2 = serializers.CharField(max_length=218)
@@ -50,8 +56,13 @@ class LoginSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class AccountUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        fields = ('id', 'username', 'first_name', 'last_name')
+
+
 class MyProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ['username', 'first_name', 'last_name', 'bio', 'date_created']
-
+        fields = ['id', 'username', 'first_name', 'last_name', 'image', 'date_created']

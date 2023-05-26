@@ -47,6 +47,6 @@ urlpatterns = [
    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
    # API
-   path('api/quizz/', include('core.urls')),
    path('api/account/', include('account.urls')),
+   path('api/quizz/', include('core.urls')),
 ]
