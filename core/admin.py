@@ -33,6 +33,7 @@ class QuizzAdmin(admin.ModelAdmin):
 class OptionAdmin(admin.ModelAdmin):
     list_display = ['id', 'title', 'is_true', 'question']
     list_display_links = ['id', 'title']
+    list_filter = ['is_true', 'question']
 
 
 

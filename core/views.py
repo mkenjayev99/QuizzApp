@@ -45,7 +45,7 @@ class ResultListAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        qs = sorted(qs, key=attrgetter('result'), reverse=True)
+        qs = sorted(qs, key=attrgetter('score'), reverse=True)
         return qs
 
 
@@ -55,10 +55,14 @@ class ResultCreateAPIView(APIView):
     def post(self, request):
         count = 0
         account = self.request.user
+        print(account)
         category_id = self.request.data.get('category_id')
+        print(category_id)
         questions = self.request.data.get('questions')
+        print(questions)
         try:
             Category.objects.get(id=category_id)
+            print(Category.objects.get(id=category_id))
         except Category.DoesNotExist:
             return Response("Category not found")
         result = Quizz.objects.create(account_id=account.id, category_id=category_id)
@@ -90,18 +94,6 @@ class ResultCreateAPIView(APIView):
         {
           "question_id": 2,
           "option_id": 6
-        },
-        {
-          "question_id": 4,
-          "option_id": 14
-        },
-        {
-          "question_id": 5,
-          "option_id": 17
-        },
-        {
-          "question_id": 6,
-          "option_id": 21
         }
       ]
     }
