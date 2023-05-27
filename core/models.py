@@ -12,6 +12,7 @@ class TimeStamp(models.Model):
 # Subjects
 class Category(TimeStamp):
     title = models.CharField(max_length=218)
+    # `created_date` already exists here because of `TimeStamp`
 
     def __str__(self):
         return self.title
@@ -22,6 +23,7 @@ class Category(TimeStamp):
 
 # Questions
 class Question(TimeStamp):
+    # `created_date` already exists here because of `TimeStamp`
     LEVEL = (
         (0, 'Easy'),
         (1, 'Medium'),
@@ -47,6 +49,7 @@ class Option(models.Model):
 
 class Quizz(TimeStamp):  # by_student
     """ collections of questions """
+    # `created_date` already exists here because of `TimeStamp`
     account = models.ForeignKey('account.Account', on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     questions = models.ManyToManyField(Question)

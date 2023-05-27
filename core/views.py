@@ -1,17 +1,18 @@
+from datetime import timedelta
 from operator import attrgetter
-
-from rest_framework import generics, status, permissions
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Count, Avg
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
-
+from django.utils import timezone
 from account.models import Account
-from .models import Option, Category, Quizz, Question
+from account.serializers import AccountSerializer
+from .models import Option, Category, Quizz, Question, Contact
 from .serializers import (CategorySerializer,
                           OptionSerializer,
                           QuestionSerializer,
-                          ResultSerializer,
+                          ResultSerializer, ContactSerializer,
                           )
 
 
@@ -22,7 +23,7 @@ class CategoryListAPIView(generics.ListAPIView):
 
 
 class QuestionListAPIView(generics.ListAPIView):
-    # http://127.0.0.1:8000/api/quizz/category/2/questions/
+    # http://127.0.0.1:8000/api/quizz/category/{category_id}/questions/
     serializer_class = QuestionSerializer
 
     def get_queryset(self):
@@ -40,6 +41,8 @@ class QuestionListAPIView(generics.ListAPIView):
 
 
 class ResultListAPIView(generics.ListAPIView):
+    # http://127.0.0.1:8000/api/quizz/quizz-result
+
     queryset = Quizz.objects.all()
     serializer_class = ResultSerializer
 
@@ -50,6 +53,8 @@ class ResultListAPIView(generics.ListAPIView):
 
 
 class ResultCreateAPIView(APIView):
+    # http://127.0.0.1:8000/api/quizz/quizz-create
+
     def post(self, request):
         count = 0
         account = self.request.user
@@ -76,6 +81,8 @@ class ResultCreateAPIView(APIView):
         return Response("Result was saved", status=status.HTTP_201_CREATED)
 
     """
+    Example for sending data:
+    
     {
       "category_id": 1,
       "questions": [
@@ -130,6 +137,8 @@ class ResultCreateAPIView(APIView):
 
 
 class AverageStatisticsListByCategory(APIView):
+    # http://127.0.0.1:8000/api/quizz/result-by-category
+
     def get(self, request):
         categories = Category.objects.all()
         category_results = []
@@ -140,6 +149,7 @@ class AverageStatisticsListByCategory(APIView):
 
 
 class AverageStatisticsListByAccount(APIView):
+    # http://127.0.0.1:8000/api/quizz/result-by-account
 
     def get(self, request):
         accounts = Account.objects.all()
@@ -147,23 +157,65 @@ class AverageStatisticsListByAccount(APIView):
         for account in accounts:
             average_by_account = Quizz.calculate_average_result_account(account)
             serialized_account = AccountSerializer(account).data
-            account_results.append({})
+            account_results.append({"account": serialized_account, "average_by_account": average_by_account})
+
+            return Response(account_results)
+
+
+# class StatisticsAPIView(APIView):
+#     permission_classes = [permissions.IsAdminUser]
+#
+#     @staticmethod
+#     def get(request):
+#         categories = Category.objects.all()
+#         authors = Account.objects.all()
+#
+#         statistics = {
+#             'authors': authors,
+#             'categories': categories,
+#             'results': Quizz.objects.all()
+#         }
+#
+#         serializer = StatisticsSerializer(statistics, context={'request': request})
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class DayStatisticsListAPIview(generics.ListAPIView):
+    queryset = Quizz.objects.all()
+    serializer_class = ResultSerializer
+
+    def get_queryset(self):
+        qs = Quizz.objects.annotate(day=TruncDay('created_date')).filter(day=timezone.now().date()).annotate(total_results=Count('id'))
+        return qs
+
+
+class WeekStatisticsListAPIView(generics.ListAPIView):
+    queryset = Quizz.objects.all()
+    serializer_class = ResultSerializer
+
+    def get_queryset(self):
+        now = timezone.now().date()
+        past_week = now - timedelta(days=7)
+        qs = Quizz.objects.filter(created_date__range=[past_week, now]).annotate(total_results=Count('id'))
+        return qs
+
+
+class MonthStatisticsListAPIView(generics.ListAPIView):
+    queryset = Quizz.objects.all()
+    serializer_class = ResultSerializer
+
+    def get_queryset(self):
+        now = timezone.now().date()
+        past_month = now - timedelta(days=30)
+        qs = Quizz.objects.filter(created_date__range=[past_month, now]).annotate(total_results=Count('id'))
+        return qs
+
+
+class ContactListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
 
 
 
-class StatisticsAPIView(APIView):
-    permission_classes = [permissions.IsAdminUser]
 
-    @staticmethod
-    def get(request):
-        categories = Category.objects.all()
-        authors = Account.objects.all()
 
-        statistics = {
-            'authors': authors,
-            'categories': categories,
-            'results': Quizz.objects.all()
-        }
 
-        serializer = StatisticsSerializer(statistics, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
