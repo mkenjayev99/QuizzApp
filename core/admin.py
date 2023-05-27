@@ -29,4 +29,10 @@ class QuizzAdmin(admin.ModelAdmin):
     list_display_links = ['id', 'score', 'category', 'account']
 
 
+@admin.register(Option)
+class OptionAdmin(admin.ModelAdmin):
+    list_display = ['id', 'title', 'is_true', 'question']
+    list_display_links = ['id', 'title']
+
+
 

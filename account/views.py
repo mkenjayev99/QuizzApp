@@ -14,7 +14,7 @@ class AccountListAPIView(generics.ListAPIView):
 
 
 class RegisterView(generics.GenericAPIView):
-    # http://127.0.0.1:8000/account/register
+    # http://127.0.0.1:8000/api/account/register
 
     serializer_class = RegisterSerializer
 

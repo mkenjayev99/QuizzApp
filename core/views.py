@@ -3,17 +3,14 @@ from operator import attrgetter
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Count, Avg
-from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
+from django.db.models import Count
+from django.db.models.functions import TruncDay
 from django.utils import timezone
 from account.models import Account
 from account.serializers import AccountSerializer
 from .models import Option, Category, Quizz, Question, Contact
-from .serializers import (CategorySerializer,
-                          OptionSerializer,
-                          QuestionSerializer,
-                          ResultSerializer, ContactSerializer,
-                          )
+from .serializers import (CategorySerializer, QuestionSerializer,
+                          ResultSerializer, ContactSerializer)
 
 
 class CategoryListAPIView(generics.ListAPIView):
@@ -137,14 +134,18 @@ class ResultCreateAPIView(APIView):
 
 
 class AverageStatisticsListByCategory(APIView):
-    # http://127.0.0.1:8000/api/quizz/result-by-category
+    # http://127.0.0.1:8000/api/quizz/result-by-category/
 
     def get(self, request):
         categories = Category.objects.all()
         category_results = []
         for category in categories:
             average_by_category = Quizz.calculate_average_result_category(category)
-            category_results.append({'title': category.title, 'average_result': average_by_category})
+            if average_by_category is not None:
+                rounded_average = round(average_by_category, 2)
+                category_results.append({'title': category.title, 'average_result': rounded_average})
+            else:
+                category_results.append({'title': category.title, 'average_result': average_by_category})
         return Response(category_results)
 
 
@@ -157,7 +158,11 @@ class AverageStatisticsListByAccount(APIView):
         for account in accounts:
             average_by_account = Quizz.calculate_average_result_account(account)
             serialized_account = AccountSerializer(account).data
-            account_results.append({"account": serialized_account, "average_by_account": average_by_account})
+            if average_by_account is not None:
+                rounded_average = round(average_by_account, 2)
+                account_results.append({"account": serialized_account, "average_by_account": rounded_average})
+            else:
+                account_results.append({"account": serialized_account, "average_by_account": average_by_account})
 
             return Response(account_results)
 
