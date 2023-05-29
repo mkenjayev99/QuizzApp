@@ -1,5 +1,5 @@
-from django.db import models
-from django.db.models import Avg
+from django.db import models, IntegrityError
+from django.db.models import Avg, Q, UniqueConstraint
 
 
 class TimeStamp(models.Model):
@@ -12,6 +12,7 @@ class TimeStamp(models.Model):
 # Subjects
 class Category(TimeStamp):
     title = models.CharField(max_length=218)
+
     # `created_date` already exists here because of `TimeStamp`
 
     def __str__(self):
@@ -33,18 +34,42 @@ class Question(TimeStamp):
     question = models.CharField(max_length=218)
     level = models.IntegerField(choices=LEVEL)
 
+    @classmethod
+    def filter_new_questions(cls, account):
+        old_questions = Quizz.objects.filter(account=account).values('questions')
+        new_questions = cls.objects.exclude(id__in=old_questions)
+        return new_questions
+
     def __str__(self):
         return self.question
 
 
 # Answers
 class Option(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, verbose_name='Question', db_index=True)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, verbose_name='Question', db_index=True, related_name='option')
     title = models.CharField(max_length=218, verbose_name='answer')
     is_true = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=['question'],
+                condition=Q(is_true=True),
+                name='unique_correct_option'
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        try:
+            super().save(*args, **kwargs)
+        except:
+            raise IntegrityError('Only one option can be marked as correct for a question.')
+
+    def __str__(self):
+        return f"{self.question}'s answers"
 
 
 class Quizz(TimeStamp):  # by_student
@@ -77,5 +102,3 @@ class Contact(models.Model):
 
     def __str__(self):
         return f"{self.email}, {self.name}"
-
-
