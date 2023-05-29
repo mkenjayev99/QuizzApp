@@ -1,6 +1,9 @@
 from datetime import timedelta
 from operator import attrgetter
-from rest_framework import generics, status
+
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Count
@@ -52,17 +55,64 @@ class ResultListAPIView(generics.ListAPIView):
 class ResultCreateAPIView(APIView):
     # http://127.0.0.1:8000/api/quizz/quizz-create
 
+    permission_classes = [permissions.IsAuthenticated]
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'category_id': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='ID of the category.'
+                ),
+                'questions': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'question_id': openapi.Schema(
+                                type=openapi.TYPE_INTEGER,
+                                description='ID of the question.'
+                            ),
+                            'answers_id': openapi.Schema(
+                                type=openapi.TYPE_INTEGER,
+                                description='ID of the answer.'
+                            ),
+                        }
+                    )
+                )
+            },
+            required=['category_id', 'questions'],
+            example={
+                "category_id": 1,
+                "questions": [
+                    {
+                        "question_id": 1,
+                        "option_id": 1
+                    },
+                    {
+                        "question_id": 2,
+                        "option_id": 1
+                    },
+                    {
+                        "question_id": 3,
+                        "option_id": 1
+                    },
+                    {
+                        "question_id": 7,
+                        "option_id": 1
+                    }
+                ]
+            }
+        )
+    )
     def post(self, request):
         count = 0
         account = self.request.user
-        print(account)
         category_id = self.request.data.get('category_id')
-        print(category_id)
         questions = self.request.data.get('questions')
-        print(questions)
         try:
             Category.objects.get(id=category_id)
-            print(Category.objects.get(id=category_id))
         except Category.DoesNotExist:
             return Response("Category not found")
         result = Quizz.objects.create(account_id=account.id, category_id=category_id)
@@ -79,6 +129,7 @@ class ResultCreateAPIView(APIView):
             result.questions.add(question)
         result.score = count
         result.save()
+        print(Response("Result was saved", status=status.HTTP_201_CREATED))
         return Response("Result was saved", status=status.HTTP_201_CREATED)
 
     """
@@ -181,7 +232,8 @@ class DayStatisticsListAPIview(generics.ListAPIView):
     serializer_class = ResultSerializer
 
     def get_queryset(self):
-        qs = Quizz.objects.annotate(day=TruncDay('created_date')).filter(day=timezone.now().date()).annotate(total_results=Count('id'))
+        qs = Quizz.objects.annotate(day=TruncDay('created_date')).filter(day=timezone.now().date()).annotate(
+            total_results=Count('id'))
         return qs
 
 
@@ -210,9 +262,3 @@ class MonthStatisticsListAPIView(generics.ListAPIView):
 class ContactListCreateAPIView(generics.ListCreateAPIView):
     queryset = Contact.objects.all()
     serializer_class = ContactSerializer
-
-
-
-
-
-
