@@ -28,18 +28,18 @@ class QuestionListAPIView(generics.ListAPIView):
     # http://127.0.0.1:8000/api/quizz/category/{category_id}/questions/
     serializer_class = QuestionSerializer
 
-    # def get_queryset(self):
-    #     category_id = self.kwargs['category_id']
-    #     qs = Question.objects.filter(category_id=category_id).order_by('?')[:5]
-    #     return qs
-
     def get_queryset(self):
-        qs = super().get_queryset()
-        category_id = self.kwargs.get('category_id')
-        if qs:
-            qs = qs.filter(category_id=category_id)
-            return qs
-        return HttpResponseNotFound('Not Found!')
+        category_id = self.kwargs['category_id']
+        qs = Question.objects.filter(category_id=category_id).order_by('?')[:5]
+        return qs
+
+    # def get_queryset(self):
+    #     qs = super().get_queryset()
+    #     category_id = self.kwargs.get('category_id')
+    #     if qs:
+    #         qs = qs.filter(category_id=category_id)
+    #         return qs
+    #     return HttpResponseNotFound('Not Found!')
 
 
 class ResultListAPIView(generics.ListAPIView):
@@ -119,7 +119,7 @@ class ResultCreateAPIView(APIView):
             Category.objects.get(id=category_id)
         except Category.DoesNotExist:
             return Response("Category not found")
-        result = Quizz.objects.create(account_id=account.id, category_id=category_id)
+        score = Quizz.objects.create(account_id=account.id, category_id=category_id)
 
         j = 0
         for i in questions:
@@ -143,16 +143,16 @@ class ResultCreateAPIView(APIView):
             else:
                 statistic[j]["Student's option"] = "Incorrect"
 
-            result.questions.add(question)
+            score.questions.add(question)
             j += 1
 
         if 99 <= count < 100:
             count = 100
-        result.score = count
-        result.save()
-        serialized_result = ResultSerializer(result).data
+        score.score = count
+        score.save()
+        serialized_result = ResultSerializer(score).data
         response_data = {
-            "result": serialized_result,
+            "score": serialized_result,
             "statistic": statistic
         }
 
@@ -246,6 +246,7 @@ class AverageStatisticsListByAccount(APIView):
 
 
 class TimeStatisticListAPIView(APIView):
+    #  http://127.0.0.1:8000/api/quizz/result-by-time/?start_date=2023-05-29&end_date=2023-05-30
     def get(self, request):
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -260,7 +261,7 @@ class TimeStatisticListAPIView(APIView):
             return Response({'message': 'start_date and end_date must be in the format YYYY-MM-DD'}, status=400)
 
         category_stats = Quizz.objects.filter(created_date__range=(start_date, end_date)).values_list('category')\
-            .annotate(attempts=models.Count('id'), total_result=models.Avg('result'))\
+            .annotate(attempts=models.Count('id'), total_result=models.Avg('score'))\
             .values('category__title', 'account__username', 'attempts', 'total_result')
 
         statistics = []
