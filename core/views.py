@@ -1,21 +1,17 @@
-from datetime import timedelta
 from operator import attrgetter
-
-from django.http import HttpResponseNotFound
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import generics, status, permissions
+from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db import models
-from django.db.models.functions import TruncDay
 from django.utils import timezone
 from account.models import Account
 from account.serializers import AccountSerializer
 from .models import Option, Category, Quizz, Question, Contact
 from .serializers import (CategorySerializer, QuestionSerializer, ResultSerializer,
-                          ContactSerializer, QuestionResultSerializer, OptionResultSerializer)
+                          ContactSerializer, QuestionResultSerializer)
 
 
 class CategoryListAPIView(generics.ListAPIView):
@@ -113,7 +109,24 @@ class ResultCreateAPIView(APIView):
         statistic = []
         account = self.request.user
         category_id = self.request.data.get('category_id')
-        questions = self.request.data.get('questions')
+        questions = self.request.data.get('questions')  # potion_ids also included
+        print(questions)
+        unique_question_ids = set()
+        unique_option_ids = set()
+        unique_questions = []
+
+        for item in questions:
+            question_id = item['question_id']
+            option_id = item['option_id']
+
+            if question_id in unique_question_ids:
+                return Response({"message": "unique question_id required. Don't input duplicates!"})
+            if option_id in unique_option_ids:
+                return Response({"message": "unique option_id required. Don't input duplicates!"})
+
+            unique_question_ids.add(question_id)
+            unique_option_ids.add(option_id)
+            unique_questions.append(item)
 
         try:
             Category.objects.get(id=category_id)
@@ -122,7 +135,7 @@ class ResultCreateAPIView(APIView):
         score = Quizz.objects.create(account_id=account.id, category_id=category_id)
 
         j = 0
-        for i in questions:
+        for i in unique_questions:
             question_id = int(i.get('question_id'))
             option_id = int(i.get('option_id'))
             try:
@@ -138,7 +151,7 @@ class ResultCreateAPIView(APIView):
             final_option = Question.objects.filter(option__is_true=True, category_id=category_id, id=question_id,
                                                    option=option)
             if final_option:
-                count += 100 // len(questions)
+                count += 100 // len(unique_questions)
                 statistic[j]["Student's option"] = "Correct"
             else:
                 statistic[j]["Student's option"] = "Incorrect"
