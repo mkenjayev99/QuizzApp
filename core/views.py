@@ -1,13 +1,14 @@
 from datetime import timedelta
 from operator import attrgetter
 
+from django.http import HttpResponseNotFound
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status, permissions
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Count
+from django.db import models
 from django.db.models.functions import TruncDay
 from django.utils import timezone
 from account.models import Account
@@ -27,18 +28,18 @@ class QuestionListAPIView(generics.ListAPIView):
     # http://127.0.0.1:8000/api/quizz/category/{category_id}/questions/
     serializer_class = QuestionSerializer
 
-    def get_queryset(self):
-        category_id = self.kwargs['category_id']
-        qs = Question.objects.filter(category_id=category_id).order_by('?')[:5]
-        return qs
-
     # def get_queryset(self):
-    #     qs = super().get_queryset()
-    #     category_id = self.kwargs.get('category_id')
-    #     if qs:
-    #         qs = qs.filter(category_id=category_id)
-    #         return qs
-    #     return HttpResponseNotFound('Not Found!')
+    #     category_id = self.kwargs['category_id']
+    #     qs = Question.objects.filter(category_id=category_id).order_by('?')[:5]
+    #     return qs
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        category_id = self.kwargs.get('category_id')
+        if qs:
+            qs = qs.filter(category_id=category_id)
+            return qs
+        return HttpResponseNotFound('Not Found!')
 
 
 class ResultListAPIView(generics.ListAPIView):
@@ -113,6 +114,7 @@ class ResultCreateAPIView(APIView):
         account = self.request.user
         category_id = self.request.data.get('category_id')
         questions = self.request.data.get('questions')
+
         try:
             Category.objects.get(id=category_id)
         except Category.DoesNotExist:
@@ -143,6 +145,9 @@ class ResultCreateAPIView(APIView):
 
             result.questions.add(question)
             j += 1
+
+        if 99 <= count < 100:
+            count = 100
         result.score = count
         result.save()
         serialized_result = ResultSerializer(result).data
@@ -240,53 +245,67 @@ class AverageStatisticsListByAccount(APIView):
             return Response(account_results)
 
 
-# class StatisticsAPIView(APIView):
-#     permission_classes = [permissions.IsAdminUser]
+class TimeStatisticListAPIView(APIView):
+    def get(self, request):
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        if not start_date or not end_date:
+            return Response({'message': 'start_date and end_date parameters are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            start_date = timezone.datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date = timezone.datetime.strptime(end_date, '%Y-%m-%d').date()
+        except (TypeError, ValueError):
+            return Response({'message': 'start_date and end_date must be in the format YYYY-MM-DD'}, status=400)
+
+        category_stats = Quizz.objects.filter(created_date__range=(start_date, end_date)).values_list('category')\
+            .annotate(attempts=models.Count('id'), total_result=models.Avg('result'))\
+            .values('category__title', 'account__username', 'attempts', 'total_result')
+
+        statistics = []
+
+        for category in category_stats:
+            category_info = {
+                'category': category['category__title'],
+                'account': category["account__username"],
+                'attempts': category['attempts'],
+                'total_result': category['total_result']
+            }
+            statistics.append(category_info)
+
+        return Response(statistics)
+
+# class DayStatisticsListAPIview(generics.ListAPIView):
+#     queryset = Quizz.objects.all()
+#     serializer_class = ResultSerializer
 #
-#     @staticmethod
-#     def get(request):
-#         categories = Category.objects.all()
-#         authors = Account.objects.all()
+#     def get_queryset(self):
+#         qs = Quizz.objects.annotate(day=TruncDay('created_date')).filter(day=timezone.now().date()).annotate(
+#             total_results=Count('id'))
+#         return qs
 #
-#         statistics = {
-#             'authors': authors,
-#             'categories': categories,
-#             'results': Quizz.objects.all()
-#         }
 #
-#         serializer = StatisticsSerializer(statistics, context={'request': request})
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-
-class DayStatisticsListAPIview(generics.ListAPIView):
-    queryset = Quizz.objects.all()
-    serializer_class = ResultSerializer
-
-    def get_queryset(self):
-        qs = Quizz.objects.annotate(day=TruncDay('created_date')).filter(day=timezone.now().date()).annotate(
-            total_results=Count('id'))
-        return qs
-
-
-class WeekStatisticsListAPIView(generics.ListAPIView):
-    queryset = Quizz.objects.all()
-    serializer_class = ResultSerializer
-
-    def get_queryset(self):
-        now = timezone.now().date()
-        past_week = now - timedelta(days=7)
-        qs = Quizz.objects.filter(created_date__range=[past_week, now]).annotate(total_results=Count('id'))
-        return qs
-
-
-class MonthStatisticsListAPIView(generics.ListAPIView):
-    queryset = Quizz.objects.all()
-    serializer_class = ResultSerializer
-
-    def get_queryset(self):
-        now = timezone.now().date()
-        past_month = now - timedelta(days=30)
-        qs = Quizz.objects.filter(created_date__range=[past_month, now]).annotate(total_results=Count('id'))
-        return qs
+# class WeekStatisticsListAPIView(generics.ListAPIView):
+#     queryset = Quizz.objects.all()
+#     serializer_class = ResultSerializer
+#
+#     def get_queryset(self):
+#         now = timezone.now().date()
+#         past_week = now - timedelta(days=7)
+#         qs = Quizz.objects.filter(created_date__range=[past_week, now]).annotate(total_results=Count('id'))
+#         return qs
+#
+#
+# class MonthStatisticsListAPIView(generics.ListAPIView):
+#     queryset = Quizz.objects.all()
+#     serializer_class = ResultSerializer
+#
+#     def get_queryset(self):
+#         now = timezone.now().date()
+#         past_month = now - timedelta(days=30)
+#         qs = Quizz.objects.filter(created_date__range=[past_month, now]).annotate(total_results=Count('id'))
+#         return qs
 
 
 class ContactListCreateAPIView(generics.ListCreateAPIView):

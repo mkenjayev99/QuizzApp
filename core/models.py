@@ -68,9 +68,6 @@ class Option(models.Model):
         except:
             raise IntegrityError('Only one option can be marked as correct for a question.')
 
-    def __str__(self):
-        return f"{self.question}'s answers"
-
 
 class Quizz(TimeStamp):  # by_student
     """ collections of questions """
