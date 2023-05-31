@@ -123,6 +123,8 @@ class ResultCreateAPIView(APIView):
                 return Response({"message": "unique question_id required. Don't input duplicates!"})
             if option_id in unique_option_ids:
                 return Response({"message": "unique option_id required. Don't input duplicates!"})
+            if Option.objects.filter(id=option_id, question_id__in=unique_question_ids).exists():
+                return Response({"message": "Option ID belongs to another question!"})
 
             unique_question_ids.add(question_id)
             unique_option_ids.add(option_id)
